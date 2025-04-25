@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kafka Web Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #chat {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #messageInput {
+            width: 70%;
+            padding: 8px;
+        }
+        #sendButton {
+            padding: 8px 16px;
+        }
+    </style>
+</head>
+<body>
+    <meta charset = "UTF-8">
+    <h1>Kafka Web Chat 🚀</h1>
+
+    <!-- New: Username display -->
+    <div id="usernameDisplay" style="font-weight: bold; margin-bottom: 10px;"></div>
+
+    <div id="chat"></div>
+
+    <input id="messageInput" type="text" placeholder="Type your message here..." autofocus />
+    <button id="sendButton" onclick="sendMessage()">Send</button>
+
+    <script>
+        let username = prompt("Enter your username:");
+        if (!username) {
+            username = "Anonymous";
+        }
+
+        // Update the username display
+        document.getElementById('usernameDisplay').innerText = "Current User: " + username;
+
+        // Connect to WebSocket server
+        const ws = new WebSocket("ws://localhost:8000/ws/" + username);
+
+        ws.onmessage = function(event) {
+            const chat = document.getElementById('chat');
+            chat.innerHTML += "<div>" + event.data + "</div>";
+            chat.scrollTop = chat.scrollHeight;
+        };
+
+        function sendMessage() {
+            const input = document.getElementById("messageInput");
+            if (input.value.trim() !== "") {
+                ws.send(input.value);
+                input.value = "";
+            }
+        }
+
+        // Allow sending message with Enter key
+        document.getElementById("messageInput").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent default form behavior if any
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
