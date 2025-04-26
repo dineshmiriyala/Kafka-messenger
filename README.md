@@ -1,4 +1,8 @@
 
+# Sample Screen shot :
+Date: April 25 2025:
+
+<img src="screenshots/chat-progress.png" width = "800">
 
 # Kafka Messenger 🚀
 

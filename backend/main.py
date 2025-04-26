@@ -11,6 +11,11 @@ producer = KafkaProducer(bootstrap_servers="localhost:9092")
 
 connected_users = set()
 
+def broadcast_online_users():
+    user_list_message = f"👥 Online Users: {', '.join(connected_users) if connected_users else 'No users online.'}"
+    producer.send('chat', user_list_message.encode('utf-8'))
+    producer.flush()
+
 def kafka_listener(websocket: WebSocket, stop_event: threading.Event):
     consumer = KafkaConsumer(
         'chat',
@@ -47,9 +52,7 @@ async def websocket_endpoint(websocket: WebSocket, username: str, roomName: str)
     producer.send('chat', join_message.encode('utf-8'))
     producer.flush()
 
-    user_list_message = f"👥 Online Users: {', '.join(connected_users)}"
-    producer.send('chat', user_list_message.encode('utf-8'))
-    producer.flush()
+    broadcast_online_users()
 
     try:
         while True:
@@ -69,6 +72,4 @@ async def websocket_endpoint(websocket: WebSocket, username: str, roomName: str)
         producer.send('chat', leave_message.encode('utf-8'))
         producer.flush()
 
-        user_list_message = f"👥 Online Users: {', '.join(connected_users) if connected_users else 'No users online.'}"
-        producer.send('chat', user_list_message.encode('utf-8'))
-        producer.flush()
+        broadcast_online_users()

@@ -23,17 +23,26 @@
         }
     </style>
 </head>
-<body>
-    <h1>Kafka Web Chat 🚀</h1>
-    <div id="chatroomName" style="font-weight: bold; margin-bottom: 10px;"></div>
+<body style="display: flex;">
+    <!-- Left sidebar for online users -->
+    <div id="userList" style="width: 200px; padding: 10px; border-right: 1px solid #ccc;">
+        <h3>👥 Online Users</h3>
+        <ul id="users" style="list-style: none; padding-left: 0;"></ul>
+    </div>
 
-    <!-- New: Username display -->
-    <div id="usernameDisplay" style="font-weight: bold; margin-bottom: 10px;"></div>
+    <!-- Main chat area -->
+    <div style="flex-grow: 1; padding: 10px;">
+        <h1>Kafka Web Chat 🚀</h1>
+        <div id="chatroomName" style="font-weight: bold; margin-bottom: 10px;"></div>
 
-    <div id="chat"></div>
+        <!-- New: Username display -->
+        <div id="usernameDisplay" style="font-weight: bold; margin-bottom: 10px;"></div>
 
-    <input id="messageInput" type="text" placeholder="Type your message here..." autofocus />
-    <button id="sendButton" onclick="sendMessage()">Send</button>
+        <div id="chat"></div>
+
+        <input id="messageInput" type="text" placeholder="Type your message here..." autofocus />
+        <button id="sendButton" onclick="sendMessage()">Send</button>
+    </div>
 
     <script>
         let username = prompt("Enter your username:");
@@ -65,6 +74,7 @@
 
         ws.onmessage = function(event) {
             const chat = document.getElementById('chat');
+            const users = document.getElementById('users');
 
             const nowDate = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
             if (nowDate !== currentDate) {
@@ -77,26 +87,38 @@
                 currentDate = nowDate;
             }
 
-            const messageDiv = document.createElement('div');
+            if (event.data.startsWith("👥 Online Users:")) {
+                const userListText = event.data.replace("👥 Online Users:", "").trim();
+                const userArray = userListText.split(",").map(user => user.trim()).filter(user => user !== "");
 
-            if (
-                event.data.includes("🚀") ||
-                event.data.includes("🚪") ||
-                event.data.includes("👥") ||
-                event.data.includes("📅")
-            ) {
-                messageDiv.style.color = 'gray';
-                messageDiv.style.textAlign = 'center';
-                messageDiv.style.margin = '5px 0';
+                users.innerHTML = "";
+                userArray.forEach(user => {
+                    const li = document.createElement('li');
+                    li.innerHTML = "🟢 " + user;
+                    users.appendChild(li);
+                });
+
             } else {
-                messageDiv.style.color = 'black';
-                messageDiv.style.textAlign = 'left';
-                messageDiv.style.margin = '5px 0';
-            }
+                const messageDiv = document.createElement('div');
 
-            messageDiv.innerText = event.data;
-            chat.appendChild(messageDiv);
-            chat.scrollTop = chat.scrollHeight;
+                if (
+                    event.data.includes("🚀") ||
+                    event.data.includes("🚪") ||
+                    event.data.includes("📅")
+                ) {
+                    messageDiv.style.color = 'gray';
+                    messageDiv.style.textAlign = 'center';
+                    messageDiv.style.margin = '5px 0';
+                } else {
+                    messageDiv.style.color = 'black';
+                    messageDiv.style.textAlign = 'left';
+                    messageDiv.style.margin = '5px 0';
+                }
+
+                messageDiv.innerText = event.data;
+                chat.appendChild(messageDiv);
+                chat.scrollTop = chat.scrollHeight;
+            }
         };
 
         function sendMessage() {
