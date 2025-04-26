@@ -22,21 +22,27 @@ def kafka_listener(websocket: WebSocket):
         try:
             coro = websocket.send_text(text)
             loop.run_until_complete(coro)
-        except:
+        except Exception as e:
+            print(f"Listener error: {e}")
             break
 
-@app.websocket("/ws/{username}")
-async def websocket_endpoint(websocket: WebSocket, username: str):
+@app.websocket("/ws/{username}/{roomName}")
+async def websocket_endpoint(websocket: WebSocket, username: str, roomName: str):
     await websocket.accept()
 
-    # Start kafka_listener in a new background thread
     threading.Thread(target=kafka_listener, args=(websocket,), daemon=True).start()
+
+    # Broadcast that the user has joined
+    join_message = f"🚀 {username} has joined the {roomName}!"
+    producer.send('chat', join_message.encode('utf-8'))
+    producer.flush()
 
     while True:
         try:
             data = await websocket.receive_text()
-            full_message = f"{username}: {data}"
+            full_message = f"[{roomName}] {username}: {data}"
             producer.send('chat', full_message.encode('utf-8'))
             producer.flush()
-        except:
+        except Exception as e:
+            print(f"WebSocket error: {e}")
             break
