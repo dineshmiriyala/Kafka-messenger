@@ -50,12 +50,52 @@
         document.getElementById('chatroomName').innerText = `Welcome to ${roomName} 🚀`;
         document.getElementById('usernameDisplay').innerText = "Current User: " + username;
 
+        let currentDate = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+        const chat = document.getElementById('chat');
+        const dateDiv = document.createElement('div');
+        dateDiv.style.color = 'gray';
+        dateDiv.style.textAlign = 'center';
+        dateDiv.style.margin = '10px 0';
+        dateDiv.innerText = currentDate;
+        chat.appendChild(dateDiv);
+
         // Connect to WebSocket server
         const ws = new WebSocket("ws://localhost:8000/ws/" + username + "/" + roomName);
 
         ws.onmessage = function(event) {
             const chat = document.getElementById('chat');
-            chat.innerHTML += "<div>" + event.data + "</div>";
+
+            const nowDate = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+            if (nowDate !== currentDate) {
+                const dateChangeDiv = document.createElement('div');
+                dateChangeDiv.style.color = 'gray';
+                dateChangeDiv.style.textAlign = 'center';
+                dateChangeDiv.style.margin = '10px 0';
+                dateChangeDiv.innerText = `📅 Date changed: ${nowDate}`;
+                chat.appendChild(dateChangeDiv);
+                currentDate = nowDate;
+            }
+
+            const messageDiv = document.createElement('div');
+
+            if (
+                event.data.includes("🚀") ||
+                event.data.includes("🚪") ||
+                event.data.includes("👥") ||
+                event.data.includes("📅")
+            ) {
+                messageDiv.style.color = 'gray';
+                messageDiv.style.textAlign = 'center';
+                messageDiv.style.margin = '5px 0';
+            } else {
+                messageDiv.style.color = 'black';
+                messageDiv.style.textAlign = 'left';
+                messageDiv.style.margin = '5px 0';
+            }
+
+            messageDiv.innerText = event.data;
+            chat.appendChild(messageDiv);
             chat.scrollTop = chat.scrollHeight;
         };
 
