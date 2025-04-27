@@ -1,8 +1,7 @@
-
 # Sample Screen shot :
 Date: April 25 2025:
 
-<img src="screenshots/chat-progress.png" width = "800">
+<img src="screenshots/chat-progress.png" width="800"/>
 
 # Kafka Messenger 🚀
 
@@ -103,6 +102,22 @@ You will be asked for a username when the page loads.
 
 ---
 
+## ✅ Current Features
+
+- 🚀 Real-time messaging with FastAPI WebSocket server
+- 🧵 Backend message brokering with Kafka
+- 🐳 Dockerized Kafka and Zookeeper environment
+- 🌐 Dynamic chat rooms (user provides room name)
+- 👥 Online users list displayed live (sidebar)
+- 🟢 Green dot indicators for online users
+- 📅 Date separator shown when a new day starts
+- 🚪 Broadcast when a user joins or leaves the chat
+- 🖼️ Screenshot of the live app included
+- 🛠 Environment setup automated with `setup.py`
+- 🔄 Automatic Kafka and Docker startup
+
+---
+
 ## 📢 Important Notes
 
 - Docker must be running before starting Kafka services.
@@ -125,15 +140,6 @@ kafka-messenger/
 ├── README.md          # Project documentation
 ├── .gitignore         # Git ignore rules
 ```
-
----
-
-## ✨ Future Improvements
-
-- Broadcast when a new user joins the chat.
-- Add timestamps to messages.
-- Save chat history into a `.txt` file.
-- Deploy the app to a live server (AWS, Render, etc).
 
 ---
 

@@ -26,6 +26,13 @@
 <body style="display: flex;">
     <!-- Left sidebar for online users -->
     <div id="userList" style="width: 200px; padding: 10px; border-right: 1px solid #ccc;">
+        <!-- Available Chat Rooms -->
+        <div id="roomList" style="margin-bottom: 20px;">
+            <h3>🏠 Available Rooms</h3>
+            <ul id="rooms" style="list-style: none; padding-left: 0;"></ul>
+        </div>
+
+        <!-- Online Users -->
         <h3>👥 Online Users</h3>
         <ul id="users" style="list-style: none; padding-left: 0;"></ul>
     </div>
@@ -33,10 +40,16 @@
     <!-- Main chat area -->
     <div style="flex-grow: 1; padding: 10px;">
         <h1>Kafka Web Chat 🚀</h1>
-        <div id="chatroomName" style="font-weight: bold; margin-bottom: 10px;"></div>
-
-        <!-- New: Username display -->
-        <div id="usernameDisplay" style="font-weight: bold; margin-bottom: 10px;"></div>
+        <div id="userInfo" style="margin-bottom: 10px; position: relative;">
+            <button
+                onclick="logout()"
+                style="background-color: red; color: white; border: none; padding: 5px 10px; margin-top: 0; border-radius: 4px; cursor: pointer; float: right;"
+                onmouseover="this.style.backgroundColor='darkred'"
+                onmouseout="this.style.backgroundColor='red'"
+            >Logout</button>
+            <div id="usernameDisplay" style="font-weight: normal; color: gray; margin-bottom: 5px;"></div>
+            <div id="chatroomName" style="font-weight: normal; color: gray;"></div>
+        </div>
 
         <div id="chat"></div>
 
@@ -45,19 +58,107 @@
     </div>
 
     <script>
-        let username = prompt("Enter your username:");
+        let username = localStorage.getItem('username');
         if (!username) {
-            username = "Anonymous";
+            alert("Username not found. Please login first.");
+            window.location.href = "login.html";
+        }
+        const availableRooms = ["General", "Friends", "Work", "Gaming"];
+        let roomName = "General";
+
+        function populateRoomsList() {
+            const roomList = document.getElementById("rooms");
+            roomList.innerHTML = "";
+
+            availableRooms.forEach(room => {
+                const li = document.createElement("li");
+                li.style.cursor = "pointer";
+                li.style.marginBottom = "5px";
+                li.innerText = room;
+                roomList.appendChild(li);
+                li.onclick = () => switchRoom(room);
+            })
         }
 
-        let roomName = prompt("Enter your chat room name:");
-        if (!roomName) {
-            roomName = "General";
+        populateRoomsList();
+
+        function switchRoom(newRoomName) {
+            if (roomName === newRoomName) {
+                // Do nothing if already in the same room
+                return;
+            }
+
+            if (window.ws) {
+                window.ws.close();
+            }
+
+            // Clear chat messages
+            document.getElementById("chat").innerHTML = "";
+
+            // Update roomName
+            roomName = newRoomName;
+
+            // Update the UI
+            document.getElementById('chatroomName').innerText = "Current Chat Room: " + roomName;
+
+            // Open new WebSocket connection
+            window.ws = new WebSocket("ws://localhost:8000/ws/" + username + "/" + roomName);
+
+            window.ws.onmessage = function(event) {
+                const chat = document.getElementById('chat');
+                const users = document.getElementById('users');
+
+                const nowDate = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                if (nowDate !== currentDate) {
+                    const dateChangeDiv = document.createElement('div');
+                    dateChangeDiv.style.color = 'gray';
+                    dateChangeDiv.style.textAlign = 'center';
+                    dateChangeDiv.style.margin = '10px 0';
+                    dateChangeDiv.innerText = `📅 Date changed: ${nowDate}`;
+                    chat.appendChild(dateChangeDiv);
+                    currentDate = nowDate;
+                }
+
+                if (event.data.startsWith("👥 Online Users:")) {
+                    const userListText = event.data.replace("👥 Online Users:", "").trim();
+                    const userArray = userListText.split(",").map(user => user.trim()).filter(user => user !== "");
+
+                    users.innerHTML = "";
+                    userArray.forEach(user => {
+                        const li = document.createElement('li');
+                        li.innerHTML = "🟢 " + user;
+                        users.appendChild(li);
+                    });
+
+                } else {
+                    const messageDiv = document.createElement('div');
+
+                    if (
+                        event.data.includes("🚀") ||
+                        event.data.includes("🚪") ||
+                        event.data.includes("📅")
+                    ) {
+                        messageDiv.style.color = 'gray';
+                        messageDiv.style.textAlign = 'center';
+                        messageDiv.style.margin = '5px 0';
+                    } else {
+                        messageDiv.style.color = 'black';
+                        messageDiv.style.textAlign = 'left';
+                        messageDiv.style.margin = '5px 0';
+                    }
+
+                    messageDiv.innerText = event.data;
+                    chat.appendChild(messageDiv);
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            };
+
+            window.ws.onopen = () => console.log("Connected to new room: " + roomName);
         }
 
         // Update the chat room and username displays
-        document.getElementById('chatroomName').innerText = `Welcome to ${roomName} 🚀`;
         document.getElementById('usernameDisplay').innerText = "Current User: " + username;
+        document.getElementById('chatroomName').innerText = "Current Chat Room: " + roomName;
 
         let currentDate = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -70,7 +171,7 @@
         chat.appendChild(dateDiv);
 
         // Connect to WebSocket server
-        const ws = new WebSocket("ws://localhost:8000/ws/" + username + "/" + roomName);
+        window.ws = new WebSocket("ws://localhost:8000/ws/" + username + "/" + roomName);
 
         ws.onmessage = function(event) {
             const chat = document.getElementById('chat');
@@ -136,6 +237,11 @@
                 sendMessage();
             }
         });
+
+        function logout() {
+            localStorage.removeItem('username');
+            window.location.href = "login.html";
+        }
     </script>
 </body>
 </html>
